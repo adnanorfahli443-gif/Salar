@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مؤسسة سالار — المساعد الذكي لرحلة عمرة رجب</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { margin: 0; background: #eef2f1; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .chat-container { width: 100%; max-width: 650px; background: #fff; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: 88vh; }
+        .chat-header { background: linear-gradient(135deg, #0f4c3a, #07291f); color: #fff; padding: 16px; text-align: center; border-bottom: 3px solid #c59d5f; }
+        .chat-header h1 { margin: 0; font-size: 1.35rem; }
+        .chat-header span { font-size: 0.85rem; color: #e0d5c1; }
+        .chat-box { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
+        .msg { padding: 12px 16px; border-radius: 14px; max-width: 88%; font-size: 0.94rem; line-height: 1.65; white-space: pre-line; }
+        .bot { background: #0f4c3a; color: #fff; align-self: flex-start; border-bottom-right-radius: 2px; }
+        .user { background: #e2e8f0; color: #111; align-self: flex-end; border-bottom-left-radius: 2px; }
+        .quick-btns { display: flex; gap: 6px; padding: 8px 12px; background: #f3f6f5; overflow-x: auto; border-top: 1px solid #e2e8f0; }
+        .quick-btns button { background: #fff; color: #0f4c3a; border: 1px solid #0f4c3a; padding: 6px 12px; border-radius: 20px; font-size: 0.82rem; cursor: pointer; white-space: nowrap; font-weight: 600; transition: 0.2s; }
+        .quick-btns button:hover { background: #0f4c3a; color: #fff; }
+        .chat-input { display: flex; padding: 12px; background: #fff; border-top: 1px solid #ddd; gap: 8px; }
+        .chat-input input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 10px; font-size: 0.95rem; outline: none; }
+        .chat-input button { background: #c59d5f; color: #fff; border: none; padding: 0 22px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+        .chat-input button:hover { background: #b0884a; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>🕋 مؤسسة سالار — رفيق المعتمر والحاج</h1>
+        <span>المساعد الذكي لرحلة عمرة رجب المباركة</span>
+    </div>
+    
+    <div class="chat-box" id="chatBox">
+        <div class="msg bot">أهلاً بك في مؤسسة سالار 🕋. أنا مساعدك الشخصي لرحلة (عمرة رجب).
+كيف يمكنني خدمتك اليوم؟ (يمكنك كتابة سؤالك أو الاختيار من الأزرار بالأسفل)</div>
+    </div>
+
+    <div class="quick-btns">
+        <button onclick="quickAsk('ما هي تفاصيل رحلة عمرة رجب؟')">📋 تفاصيل الرحلة</button>
+        <button onclick="quickAsk('ما هي أسعار الغرف؟')">💰 أسعار الغرف</button>
+        <button onclick="quickAsk('كم عدد ليالي الإقامة والمبيت؟')">🌙 مدة الإقامة</button>
+        <button onclick="quickAsk('ما هي الفنادق؟')">🏨 الفنادق</button>
+        <button onclick="quickAsk('من هو الشيخ المرافق؟')">🕌 الشيخ المرافق</button>
+        <button onclick="quickAsk('أريد حجز رحلة عمرة رجب')">✅ احجز الآن</button>
+    </div>
+
+    <div class="chat-input">
+        <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">إرسال</button>
+    </div>
+</div>
+<script>
+    const WA_BASE_URL = "https://wa.me/963959129178";
+
+    const ROOM_TYPES = [
+        { id: 1, name: "غرفة رباعية", price: 500 },
+        { id: 2, name: "غرفة ثلاثية", price: 575 },
+        { id: 3, name: "غرفة ثنائية", price: 675 }
+    ];
+
+    const FULL_TRIP_DETAILS = `🕋 مؤسسة سالار — تفاصيل رحلة عمرة رجب المباركة 🕋
+
+📅 موعد الانطلاق: 14 / 12
+⏳ مدة الرحلة: 11 ليلة (8 ليالي في مكة المكرمة + 3 ليالي في المدينة المنورة).
+
+🏨 الفنادق والإقامة:
+• مكة المكرمة: فندق العيان جراند (4 نجوم) — شارع أجياد، يبعد 5 دقائق مشي عن الحرم.
+• المدينة المنورة: فندق الماسة الفضية (نجمتان) — المنطقة المركزية على بعد خطوات من الحرم النبوي.
+
+💰 الأسعار حسب نوع الغرفة:
+• غرفة رباعية: 500$ للراكب.
+• غرفة ثلاثية: 575$ للراكب.
+• غرفة ثنائية: 675$ للراكب.
+
+✨ مميزات الرحلة والبرنامج:
+• تأشيرة دخول ميسّرة وسريعة.
+• إقامات فندقية فاخرة.
+• باصات VIP حديثة ومكيفة مزودة بإنترنت سرعة فائقة.
+• جولات تشمل كافة المزارات المكية والمدنية.
+• إرشاد ديني عظيم برفقة الشيخ محمد عادل ديركي، وإنشاد ديني على مسار الرحلة ضمن عمرة جماعية.
+
+📞 للحجز المباشر عبر واتساب اضغط على الرقم: 0959129178`;
+
+    let bookingState = {
+        active: false,
+        step: 0,
+        selectedRoom: null,
+        count: 1,
+        fullName: "",
+        phone: ""
+    };
+
+    function quickAsk(question) {
+        document.getElementById('userInput').value = question;
+        sendMessage();
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        input.value = '';
+
+        setTimeout(() => {
+            const reply = generateSmartReply(text);
+            addMessage(reply, 'bot');
+        }, 350);
+    }
+
+    function normalizeArabic(str) {
+        return str.toLowerCase()
+            .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+            .replace(/[أإآ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/ى/g, 'ي')
+            .replace(/[\u064B-\u065F]/g, '');
+    }
+
+    function generateSmartReply(rawText) {
+        const text = normalizeArabic(rawText);
+
+        if (bookingState.active && (text.includes("الغاء") || text.includes("تراجع") || text.includes("ايقاف"))) {
+            bookingState = { active: false, step: 0, selectedRoom: null, count: 1, fullName: "", phone: "" };
+            return "تم إلغاء عملية الحجز الحالية. كيف يمكنني مساعدتك أيضاً؟";
+        }
+
+        if (bookingState.active) {
+            return handleBookingFlow(rawText.trim(), text);
+        }
+
+        if ((text.includes("حجز") || text.includes("احجز") || text.includes("تسجيل") || text.includes("سجلني")) && !text.includes("سعر") && !text.includes("اسعار") && !text.includes("بكم") && !text.includes("تكلفه") && !text.includes("موقع") && !text.includes("عنوان") && !text.includes("اين") && !text.includes("وين")) {
+            bookingState.active = true;
+            bookingState.step = 1;
+            return `يسعدنا تشريفك في رحلة (عمرة رجب) مع مؤسسة سالار بتاريخ 14/12 🕋.\nلإتمام الحجز، يرجى اختيار نوع الغرفة من القائمة:\n
+1️⃣ غرفة رباعية (500$ للراكب)
+2️⃣ غرفة ثلاثية (575$ للراكب)
+3️⃣ غرفة ثنائية (675$ للراكب)
+
+(اكتب الرقم 1 أو 2 أو 3، أو اكتب "إلغاء" للتراجع)`;
+        }
+
+        if (text.includes("موقع") || text.includes("عنوان") || text.includes("اين") || text.includes("وين") || text.includes("مكان") || text.includes("مكتب") || text.includes("سالار")) {
+            return "📞 للحجز والاستفسار عن موقع مكتب مؤسسة سالار، اضغط على الرقم للتواصل عبر واتساب: 0959129178";
+        }
+
+        if (text.includes("اناشيد") || text.includes("انشاد") || text.includes("نشيد") || text.includes("منشد")) {
+            return "نعم، يوجد أناشيد دينية على مسار الرحلة.";
+        }
+
+        if (text.includes("شيخ") || text.includes("مرشد") || text.includes("ارشاد") || text.includes("ديركي")) {
+            return "الشيخ المرافق للرحلة هو الشيخ: محمد عادل ديركي.";
+        }
+
+        if (text.includes("هديه") || text.includes("هدايا") || text.includes("احرام") || text.includes("سجاده") || text.includes("مجاني")) {
+            return "عذراً، لا يوجد هدايا ضمن برنامج عمرة رجب.";
+        }
+
+        if (text.includes("سعر") || text.includes("اسعار") || text.includes("غرف") || text.includes("غرفه") || text.includes("تكلفه") || text.includes("بكم") || text.includes("قديش") || text.includes("رباعيه") || text.includes("ثلاثيه") || text.includes("ثنائيه")) {
+            return `• الغرفة الرباعية: 500$ للراكب.
+• الغرفة الثلاثية: 575$ للراكب.
+• الغرفة الثنائية: 675$ للراكب.`;
+        }
+
+        if (text.includes("مبيت") || text.includes("اقامه") || text.includes("ليالي") || text.includes("ليله") || text.includes("ايام") || text.includes("كم يوم") || text.includes("مده")) {
+            return `• 8 ليالي في مكة المكرمة.
+• 3 ليالي في المدينة المنورة.
+(المجموع 11 ليلة).`;
+        }
+
+        if (text.includes("فندق") && text.includes("مكه")) {
+            return `• فندق مكة المكرمة: فندق العيان جراند (4 نجوم) — شارع أجياد، يبعد 5 دقائق مشي عن الحرم.`;
+        }
+
+        if (text.includes("فندق") && text.includes("مدينه")) {
+            return `• فندق المدينة المنورة: فندق الماسة الفضية (نجمتان) — المنطقة المركزية على بعد خطوات من الحرم النبوي.`;
+        }
+
+        if (text.includes("فندق") || text.includes("فنادق") || text.includes("نجمه") || text.includes("نجوم")) {
+            return `🏨 الفنادق المعتمدة في رحلة عمرة رجب:\n
+• مكة المكرمة: فندق العيان جراند (4 نجوم) — شارع أجياد، يبعد 5 دقائق مشي عن الحرم.
+• المدينة المنورة: فندق الماسة الفضية (نجمتان) — المنطقة المركزية على بعد خطوات من الحرم النبوي.`;
+        }
+
+        if (text.includes("سلام") || text.includes("مرحبا") || text.includes("اهلا") || text.includes("صباح") || text.includes("مساء") || text.includes("يعطيك العافيه")) {
+            return `وعليكم السلام ورحمة الله وبركاته 🕋، أهلاً بك في مؤسسة سالار.\nيسعدني إطلاعك على كافة تفاصيل رحلة (عمرة رجب) بتاريخ 14/12 أو تسجيل حجزك مباشرة. بماذا نبدأ؟`;
+        }
+
+        if (text.includes("رقم") || text.includes("تواصل") || text.includes("واتساب") || text.includes("مشرف") || text.includes("هاتف")) {
+            return `📞 للتواصل المباشر وحجز رحلة عمرة رجب مع مؤسسة سالار، اضغط على الرقم للانتقال إلى واتساب: 0959129178`;
+        }
+
+        return FULL_TRIP_DETAILS;
+    }
+    function handleBookingFlow(rawText, normText) {
+        if (bookingState.step === 1) {
+            let room = null;
+            const num = parseInt(normText);
+            if (num >= 1 && num <= 3) {
+                room = ROOM_TYPES[num - 1];
+            } else if (normText.includes("رباعي")) {
+                room = ROOM_TYPES;
+            } else if (normText.includes("ثلاثي")) {
+                room = ROOM_TYPES;
+            } else if (normText.includes("ثنائي")) {
+                room = ROOM_TYPES;
+            }
+
+            if (!room) {
+                return "يرجى اختيار نوع الغرفة بكتابة الرقم (1 للرباعية، 2 للثلاثية، 3 للثنائية):";
+            }
+
+            bookingState.selectedRoom = room;
+            bookingState.step = 2;
+            return `تم اختيار: ${room.name} بتكلفة ${room.price}$ للراكب.\n\nالآن، كم عدد الركاب (المعتمرين)؟ (اكتب رقماً مثل: 1 أو 2 أو 4)`;
+        }
+
+        if (bookingState.step === 2) {
+            const count = parseInt(normText);
+            if (isNaN(count) || count < 1 || count > 50) {
+                return "يرجى كتابة عدد ركاب صحيح بالأرقام (مثال: 1 أو 2 أو 4):";
+            }
+
+            bookingState.count = count;
+            bookingState.step = 3;
+            return `تمام (${count} ركاب).\n\nيرجى كتابة الاسم الثلاثي لصاحب الحجز كما هو في جواز السفر:`;
+        }
+
+        if (bookingState.step === 3) {
+            if (rawText.length < 4) {
+                return "يرجى كتابة الاسم الثلاثي بشكل واضح:";
+            }
+
+            bookingState.fullName = rawText;
+            bookingState.step = 4;
+            return `تشرفنا بك أستاذ/ة ${rawText}.\n\nأخيراً، يرجى إدخال رقم الهاتف (واتساب) للتواصل وتأكيد الحجز:`;
+        }
+
+        if (bookingState.step === 4) {
+            if (rawText.length < 7) {
+                return "يرجى إدخال رقم هاتف صحيح:";
+            }
+
+            bookingState.phone = rawText;
+            const total = bookingState.selectedRoom.price * bookingState.count;
+            
+            const summary = `المؤسسة: مؤسسة سالار
+الرحلة: عمرة رجب (انطلاق 14/12)
+الاسم: ${bookingState.fullName}
+الهاتف: ${bookingState.phone}
+نوع الغرفة: ${bookingState.selectedRoom.name}
+عدد الركاب: ${bookingState.count}
+الإجمالي التقديري: ${total}$`;
+
+            const waMsg = `السلام عليكم مؤسسة سالار، طلب حجز جديد في رحلة (عمرة رجب):\n${summary}`;
+            const fullWaUrl = `${WA_BASE_URL}?text=${encodeURIComponent(waMsg)}`;
+
+            bookingState = { active: false, step: 0, selectedRoom: null, count: 1, fullName: "", phone: "" };
+
+            setTimeout(() => {
+                window.open(fullWaUrl, '_blank');
+            }, 600);
+
+            return {
+                text: `✅ تم تجهيز ملخص حجزك لدى مؤسسة سالار بنجاح:\n\n${summary}\n\nاضغط على الرقم أو الزر بالأسفل لإرسال الطلب عبر واتساب: 0959129178`,
+                waUrl: fullWaUrl
+            };
+        }
+    }
+
+    function addMessage(content, sender) {
+        const box = document.getElementById('chatBox');
+        const div = document.createElement('div');
+        div.className = `msg ${sender}`;
+
+        let messageText = typeof content === 'object' ? content.text : content;
+        let targetUrl = typeof content === 'object' ? content.waUrl : WA_BASE_URL;
+
+        let safeHtml = messageText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        safeHtml = safeHtml.replace(/0959129178/g, `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #c59d5f; color: #fff; padding: 2px 10px; border-radius: 6px; font-weight: bold; text-decoration: none;">0959129178 📲</a>`);
+
+        div.innerHTML = safeHtml;
+
+        if (typeof content === 'object' && content.waUrl) {
+            const btn = document.createElement('a');
+            btn.href = content.waUrl;
+            btn.target = "_blank";
+            btn.rel = "noopener noreferrer";
+            btn.innerText = "📲 اضغط هنا لإرسال الحجز إلى واتساب مؤسسة سالار";
+            btn.style.cssText = "display: block; margin-top: 10px; background: #25D366; color: #fff; text-align: center; padding: 11px; border-radius: 8px; text-decoration: none; font-weight: bold;";
+            div.appendChild(btn);
+        }
+
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
